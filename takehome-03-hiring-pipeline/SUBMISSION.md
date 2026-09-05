@@ -1,10 +1,8 @@
 # Submission
 
-Fill this in and commit it. This is the first file we open.
-
 ## Links
 
-- **GitHub repository:** <public repo URL>
+- **GitHub repository:** https://github.com/Gulnawaj/Hiring-Pipeline-System
 - **Live application:** <deployed URL>
 
 ## Notes for the reviewer
