@@ -17,11 +17,11 @@ const JobDetails = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { isRecruiter } = useAuth();
-  
+
   const [job, setJob] = useState(null);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modals state
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isAppFormOpen, setIsAppFormOpen] = useState(false);
@@ -51,9 +51,12 @@ const JobDetails = () => {
   const handleUpdateJob = async (data) => {
     setIsProcessing(true);
     try {
-      await jobsService.updateJob(jobId, data);
+      const response = await jobsService.updateJob(jobId, data);
+      setJob((currentJob) => ({
+        ...currentJob,
+        ...(response?.data || data)
+      }));
       setIsEditFormOpen(false);
-      fetchJobData();
     } catch (err) {
       alert('Failed to update job');
     } finally {
@@ -66,7 +69,7 @@ const JobDetails = () => {
     try {
       await jobsService.archiveJob(jobId);
       setIsArchiveConfirmOpen(false);
-      fetchJobData();
+      await fetchJobData();
     } catch (err) {
       alert('Failed to archive job');
     } finally {
@@ -75,27 +78,40 @@ const JobDetails = () => {
   };
 
   const handleRestoreJob = async () => {
+    setIsProcessing(true);
     try {
       await jobsService.restoreJob(jobId);
-      fetchJobData();
+      await fetchJobData();
     } catch (err) {
       alert('Failed to restore job');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleToggleStatus = async () => {
+    if (!job || isProcessing) return;
+
+    const currentStatus = String(job.status || '').toLowerCase();
+    const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+
     setIsProcessing(true);
     try {
-      const newStatus = job.status === 'open' ? 'closed' : 'open';
-      await jobsService.updateJob(jobId, { 
+      const response = await jobsService.updateJob(jobId, {
         title: job.title,
         department: job.department,
         description: job.description,
-        status: newStatus 
+        status: newStatus
       });
-      fetchJobData();
+
+      setJob((currentJob) => ({
+        ...currentJob,
+        ...(response?.data || {}),
+        status: response?.data?.status || newStatus
+      }));
     } catch (err) {
-      alert('Failed to update job status');
+      console.error('Failed to update job status', err);
+      alert(err.response?.data?.error || 'Failed to update job status');
     } finally {
       setIsProcessing(false);
     }
@@ -106,7 +122,7 @@ const JobDetails = () => {
     try {
       await applicationsService.createApplication(data);
       setIsAppFormOpen(false);
-      fetchJobData();
+      await fetchJobData();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to add candidate');
     } finally {
@@ -124,7 +140,7 @@ const JobDetails = () => {
         Back to Jobs
       </Link>
 
-      <JobHeader 
+      <JobHeader
         job={job}
         onEdit={() => setIsEditFormOpen(true)}
         onArchive={() => setIsArchiveConfirmOpen(true)}
@@ -139,7 +155,7 @@ const JobDetails = () => {
             Candidates ({applications.length})
           </h2>
           {isRecruiter && (
-            <button 
+            <button
               onClick={() => setIsAppFormOpen(true)}
               className="btn btn-primary text-sm py-1.5 px-3"
             >
@@ -150,8 +166,8 @@ const JobDetails = () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           {applications.length === 0 ? (
-            <EmptyState 
-              title="No candidates yet" 
+            <EmptyState
+              title="No candidates yet"
               message="Add a candidate manually or wait for applications to arrive."
             />
           ) : (
@@ -196,8 +212,8 @@ const JobDetails = () => {
 
       {/* Modals */}
       {isEditFormOpen && (
-        <JobForm 
-          isOpen={true} 
+        <JobForm
+          isOpen={true}
           onClose={() => setIsEditFormOpen(false)}
           initialData={job}
           onSubmit={handleUpdateJob}
@@ -206,7 +222,7 @@ const JobDetails = () => {
       )}
 
       {isAppFormOpen && (
-        <ApplicationForm 
+        <ApplicationForm
           jobId={jobId}
           onClose={() => setIsAppFormOpen(false)}
           onSubmit={handleCreateApplication}
@@ -214,7 +230,7 @@ const JobDetails = () => {
         />
       )}
 
-      <ConfirmDialog 
+      <ConfirmDialog
         isOpen={isArchiveConfirmOpen}
         onClose={() => setIsArchiveConfirmOpen(false)}
         onConfirm={handleArchiveJob}
