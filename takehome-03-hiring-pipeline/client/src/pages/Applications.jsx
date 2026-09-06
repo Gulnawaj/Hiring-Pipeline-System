@@ -9,6 +9,18 @@ import { useAuth } from '../context/AuthContext';
 
 const STAGES = ['Applied', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected'];
 
+const formatStage = (stage) => {
+  if (!stage) return '—';
+  const value = String(stage).toLowerCase();
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+const formatDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
+};
+
 const Applications = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +49,29 @@ const Applications = () => {
 
   const fetchApplications = async () => {
     setLoading(true);
+    setSelectedIds(new Set());
+
     try {
-      const response = await applicationsService.getApplications(filters);
-      setApplications(response.data.data || []);
-      setTotal(response.data.pagination?.total || 0);
+      const params = {
+        ...filters,
+        ...(filters.stage === 'rejected'
+          ? { stage: '', is_rejected: '1' }
+          : { is_rejected: '' }),
+      };
+
+      const response = await applicationsService.getApplications(params);
+
+      setApplications(
+        Array.isArray(response.data?.data)
+          ? response.data.data
+          : []
+      );
+
+      setTotal(response.data?.pagination?.total || 0);
     } catch (err) {
       console.error('Failed to fetch applications', err);
+      setApplications([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -67,7 +96,7 @@ const Applications = () => {
     if (selectedIds.size === applications.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(applications.map(a => a._id)));
+      setSelectedIds(new Set(applications.map(a => a.id)));
     }
   };
 
@@ -140,8 +169,13 @@ const Applications = () => {
                 onChange={(e) => setFilters({ ...filters, stage: e.target.value, page: 1 })}
               >
                 <option value="">All Stages</option>
-                {STAGES.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
+                {STAGES.map((stage) => (
+                  <option
+                    key={stage}
+                    value={stage === 'Rejected' ? 'rejected' : stage.toLowerCase()}
+                  >
+                    {stage}
+                  </option>
                 ))}
               </select>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -212,37 +246,44 @@ const Applications = () => {
                 </tr>
               ) : (
                 applications.map((app) => (
-                  <tr key={app._id} className={`hover:bg-slate-50 transition-colors ${selectedIds.has(app._id) ? 'bg-indigo-50/30' : ''}`}>
+                  <tr key={app.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.has(app.id) ? 'bg-indigo-50/30' : ''}`}>
                     {isRecruiter && (
                       <td className="px-6 py-4">
                         <input
                           type="checkbox"
                           className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                          checked={selectedIds.has(app._id)}
-                          onChange={() => toggleSelection(app._id)}
+                          checked={selectedIds.has(app.id)}
+                          onChange={() => toggleSelection(app.id)}
                         />
                       </td>
                     )}
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-slate-900">{app.candidateName}</div>
-                      <div className="text-xs text-slate-500">{app.email}</div>
+                      <div className="text-sm font-semibold text-slate-900">{app.candidate_name}</div>
+                      <div className="text-xs text-slate-500">{app.candidate_email}</div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-700">
-                      {app.job?.title || 'Unknown Job'}
+                      {app.job_title || 'Unknown Job'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${app.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
-                          app.currentStage === 'Hired' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            'bg-blue-50 text-blue-700 border-blue-200'
-                        }`}>
-                        {app.status === 'rejected' ? 'Rejected' : app.currentStage}
+                      <span
+                        className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
+                          Number(app.is_rejected) === 1
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : String(app.stage || '').toLowerCase() === 'hired'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-blue-50 text-blue-700 border-blue-200'
+                        }`}
+                      >
+                        {Number(app.is_rejected) === 1
+                          ? 'Rejected'
+                          : formatStage(app.stage)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
-                      {new Date(app.createdAt).toLocaleDateString()}
+                      {formatDate(app.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link to={`/applications/${app._id}`} className="text-indigo-600 hover:text-indigo-900 flex items-center justify-end">
+                      <Link to={`/applications/${app.id}`} className="text-indigo-600 hover:text-indigo-900 flex items-center justify-end">
                         View <ArrowRight className="w-4 h-4 ml-1" />
                       </Link>
                     </td>

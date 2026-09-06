@@ -26,7 +26,9 @@ const JobHeader = ({ job, onEdit, onArchive, onRestore, onToggleStatus }) => {
             </div>
             <div className="flex items-center">
               <Calendar className="w-4 h-4 mr-1.5 text-slate-400" />
-              Created {new Date(job.createdAt).toLocaleDateString()}
+              Created {job.created_at
+               ? new Date(job.created_at).toLocaleDateString()
+               : '—'}
             </div>
           </div>
         </div>

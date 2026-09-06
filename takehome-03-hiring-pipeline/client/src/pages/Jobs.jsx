@@ -24,23 +24,24 @@ const Jobs = () => {
     fetchJobs();
   }, [showArchived]);
 
-  const fetchJobs = async () => {
-    setLoading(true);
-    try {
-      const response = await jobsService.getJobs();
-      let data = response.data;
+const fetchJobs = async () => {
+  setLoading(true);
 
-      if (!showArchived) {
-        data = data.filter((job) => job.status !== 'archived');
-      }
+  try {
+    const response = await jobsService.getJobs({
+      include_archived: showArchived,
+    });
 
-      setJobs(data);
-    } catch (err) {
-      console.error('Failed to load jobs', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const data = Array.isArray(response.data) ? response.data : [];
+
+    setJobs(data);
+  } catch (err) {
+    console.error('Failed to load jobs', err);
+    setJobs([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCreateJob = async (data) => {
     setIsProcessing(true);
