@@ -83,6 +83,24 @@ const JobDetails = () => {
     }
   };
 
+  const handleToggleStatus = async () => {
+    setIsProcessing(true);
+    try {
+      const newStatus = job.status === 'open' ? 'closed' : 'open';
+      await jobsService.updateJob(jobId, { 
+        title: job.title,
+        department: job.department,
+        description: job.description,
+        status: newStatus 
+      });
+      fetchJobData();
+    } catch (err) {
+      alert('Failed to update job status');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleCreateApplication = async (data) => {
     setIsProcessing(true);
     try {
@@ -95,10 +113,6 @@ const JobDetails = () => {
       setIsProcessing(false);
     }
   };
-
-  if (!isRecruiter) {
-    return <div className="p-12 text-center text-red-500">Access denied. Recruiters only.</div>;
-  }
 
   if (loading) return <LoadingSpinner />;
   if (!job) return <EmptyState title="Job not found" />;
@@ -115,6 +129,7 @@ const JobDetails = () => {
         onEdit={() => setIsEditFormOpen(true)}
         onArchive={() => setIsArchiveConfirmOpen(true)}
         onRestore={handleRestoreJob}
+        onToggleStatus={handleToggleStatus}
       />
 
       <div className="mt-10">
@@ -123,12 +138,14 @@ const JobDetails = () => {
             <Users className="w-5 h-5 mr-2 text-indigo-500" />
             Candidates ({applications.length})
           </h2>
-          <button 
-            onClick={() => setIsAppFormOpen(true)}
-            className="btn btn-primary text-sm py-1.5 px-3"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add Candidate
-          </button>
+          {isRecruiter && (
+            <button 
+              onClick={() => setIsAppFormOpen(true)}
+              className="btn btn-primary text-sm py-1.5 px-3"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add Candidate
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

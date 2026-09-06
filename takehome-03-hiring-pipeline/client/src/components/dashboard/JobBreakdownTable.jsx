@@ -17,9 +17,9 @@ const JobBreakdownTable = ({ data }) => {
           </thead>
           <tbody className="bg-white divide-y divide-slate-200">
             {data.map((job) => (
-              <tr key={job._id}>
+              <tr key={job.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{job.title}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-right font-semibold">{job.count}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-right font-semibold">{job.total_applications}</td>
               </tr>
             ))}
             {data.length === 0 && (

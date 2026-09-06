@@ -33,12 +33,12 @@ const Dashboard = () => {
     return <div className="text-red-500 text-center p-8 bg-red-50 rounded-lg">Failed to load dashboard data.</div>;
   }
 
-  const { 
-    headline, 
-    applicationsByJob, 
-    applicationsByStage, 
-    weeklyApplications 
-  } = stats;
+  const { metrics, by_job, by_stage, weekly_trend } = stats;
+
+  // Transform by_stage object into array for StageChart
+  const stageChartData = by_stage
+    ? Object.entries(by_stage).map(([stage, count]) => ({ _id: stage, count }))
+    : [];
 
   return (
     <div className="space-y-6">
@@ -49,20 +49,20 @@ const Dashboard = () => {
 
       {/* Headline Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Open Positions" value={headline.openPositions} icon={Briefcase} colorClass="bg-blue-500" />
-        <StatCard title="Active Applications" value={headline.activeApplications} icon={Users} colorClass="bg-indigo-500" />
-        <StatCard title="Interviews This Week" value={headline.interviewsThisWeek} icon={Calendar} colorClass="bg-purple-500" />
-        <StatCard title="Hires This Month" value={headline.hiresThisMonth} icon={UserCheck} colorClass="bg-emerald-500" />
+        <StatCard title="Open Positions" value={metrics?.open_positions ?? 0} icon={Briefcase} colorClass="bg-blue-500" />
+        <StatCard title="Active Applications" value={metrics?.active_applications ?? 0} icon={Users} colorClass="bg-indigo-500" />
+        <StatCard title="Interviews This Week" value={metrics?.interviews_scheduled ?? 0} icon={Calendar} colorClass="bg-purple-500" />
+        <StatCard title="Hires This Month" value={metrics?.hires_this_month ?? 0} icon={UserCheck} colorClass="bg-emerald-500" />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <StageChart data={applicationsByStage} />
-        <WeeklyTrendsChart data={weeklyApplications} />
+        <StageChart data={stageChartData} />
+        <WeeklyTrendsChart data={weekly_trend || []} />
       </div>
       
       {/* Table */}
-      <JobBreakdownTable data={applicationsByJob} />
+      <JobBreakdownTable data={by_job || []} />
     </div>
   );
 };

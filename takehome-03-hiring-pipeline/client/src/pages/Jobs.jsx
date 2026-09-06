@@ -6,11 +6,14 @@ import JobForm from '../components/jobs/JobForm';
 import Badge from '../components/common/Badge';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
+import { useAuth } from '../context/AuthContext';
 
 const Jobs = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const { isRecruiter } = useAuth();
   
   // Create Job Modal state
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
@@ -56,13 +59,15 @@ const Jobs = () => {
           <h1 className="text-2xl font-bold text-slate-900">Job Openings</h1>
           <p className="text-slate-500 mt-1">Manage your active and past job postings</p>
         </div>
-        <button 
-          onClick={() => setIsCreateFormOpen(true)}
-          className="btn btn-primary whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Job
-        </button>
+        {isRecruiter && (
+          <button 
+            onClick={() => setIsCreateFormOpen(true)}
+            className="btn btn-primary whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Job
+          </button>
+        )}
       </div>
 
       <div className="card">
@@ -75,6 +80,8 @@ const Jobs = () => {
               type="text"
               className="input-field pl-10"
               placeholder="Search jobs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <label className="flex items-center space-x-2 text-sm text-slate-600 cursor-pointer">
@@ -102,15 +109,19 @@ const Jobs = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
-                {jobs.map((job) => (
-                  <tr key={job._id} className="hover:bg-slate-50 transition-colors group">
+                {jobs.filter(job => {
+                  const term = searchTerm.trim().toLowerCase();
+                  if (!term) return true;
+                  return job.title.toLowerCase().includes(term);
+                }).map((job) => (
+                  <tr key={job.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="bg-indigo-50 p-2 rounded-lg mr-4 group-hover:bg-indigo-100 transition-colors">
                           <Briefcase className="w-5 h-5 text-indigo-600" />
                         </div>
                         <div>
-                          <Link to={`/jobs/${job._id}`} className="text-sm font-semibold text-indigo-600 hover:text-indigo-900">
+                          <Link to={`/jobs/${job.id}`} className="text-sm font-semibold text-indigo-600 hover:text-indigo-900">
                             {job.title}
                           </Link>
                           <div className="text-xs text-slate-500 mt-1">{new Date(job.createdAt).toLocaleDateString()}</div>
@@ -129,7 +140,7 @@ const Jobs = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link to={`/jobs/${job._id}`} className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors">
+                      <Link to={`/jobs/${job.id}`} className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-colors">
                         View Details
                       </Link>
                     </td>

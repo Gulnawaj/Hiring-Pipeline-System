@@ -4,7 +4,8 @@ import { applicationsService } from '../services/applications.service';
 import PipelineView from '../components/pipeline/PipelineView';
 import TimelineHistory from '../components/pipeline/TimelineHistory';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Mail, FileText, User, Users } from 'lucide-react';
+import api from '../services/api';
+import { ArrowLeft, Mail, FileText, User, Users, Briefcase, Plus, X } from 'lucide-react';
 
 const ApplicationDetails = () => {
   const { applicationId } = useParams();
@@ -12,7 +13,9 @@ const ApplicationDetails = () => {
   const [loading, setLoading] = useState(true);
   const { isRecruiter } = useAuth();
   
-  // Note: For simplicity in this implementation, we are fetching assigned interviewers directly if needed,
+  const [interviewersList, setInterviewersList] = useState([]);
+  const [selectedInterviewer, setSelectedInterviewer] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
   // but let's assume the backend populates them or we just show a placeholder list since 
   // managing interviewers isn't fully detailed in the current component context. 
   // Real implementation would have a recruiter panel here to add/remove interviewers.
@@ -28,9 +31,44 @@ const ApplicationDetails = () => {
     }
   };
 
+  const fetchInterviewersList = async () => {
+    try {
+      if (isRecruiter) {
+        const response = await api.get('/auth/interviewers');
+        setInterviewersList(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to load interviewers list', err);
+    }
+  };
+
   useEffect(() => {
     fetchApplicationDetails();
-  }, [applicationId]);
+    fetchInterviewersList();
+  }, [applicationId, isRecruiter]);
+
+  const handleAssignInterviewer = async () => {
+    if (!selectedInterviewer) return;
+    setIsAssigning(true);
+    try {
+      await applicationsService.assignInterviewer(applicationId, { interviewer_id: selectedInterviewer });
+      setSelectedInterviewer('');
+      fetchApplicationDetails();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to assign interviewer');
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleRemoveInterviewer = async (interviewerId) => {
+    try {
+      await applicationsService.removeInterviewer(applicationId, interviewerId);
+      fetchApplicationDetails();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to remove interviewer');
+    }
+  };
 
   if (loading) {
     return (
@@ -126,6 +164,15 @@ const ApplicationDetails = () => {
                       <p className="font-medium text-slate-900">{interviewer.name}</p>
                       <p className="text-xs text-slate-500">{interviewer.email}</p>
                     </div>
+                    {isRecruiter && (
+                      <button 
+                        onClick={() => handleRemoveInterviewer(interviewer._id || interviewer.id)}
+                        className="ml-auto text-slate-400 hover:text-red-500 p-1"
+                        title="Remove interviewer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -134,9 +181,29 @@ const ApplicationDetails = () => {
             )}
             
             {isRecruiter && (
-              <button className="mt-4 w-full btn btn-secondary text-indigo-600 border-indigo-200">
-                Manage Interviewers
-              </button>
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 block">Assign Interviewer</label>
+                <div className="flex gap-2">
+                  <select 
+                    value={selectedInterviewer}
+                    onChange={(e) => setSelectedInterviewer(e.target.value)}
+                    className="flex-1 text-sm border-slate-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                    disabled={isAssigning}
+                  >
+                    <option value="">Select interviewer...</option>
+                    {interviewersList.map(int => (
+                      <option key={int.id} value={int.id}>{int.name}</option>
+                    ))}
+                  </select>
+                  <button 
+                    onClick={handleAssignInterviewer}
+                    disabled={!selectedInterviewer || isAssigning}
+                    className="btn btn-primary px-3 py-2 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -144,10 +211,5 @@ const ApplicationDetails = () => {
     </div>
   );
 };
-
-// Simple Mock component missing from lucide for consistency
-function Briefcase(props) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>;
-}
 
 export default ApplicationDetails;

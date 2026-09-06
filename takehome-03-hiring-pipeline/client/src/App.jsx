@@ -56,12 +56,12 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="jobs" element={
-              <ProtectedRoute allowedRoles={['recruiter']}>
+              <ProtectedRoute allowedRoles={['recruiter', 'interviewer']}>
                 <Jobs />
               </ProtectedRoute>
             } />
             <Route path="jobs/:jobId" element={
-              <ProtectedRoute allowedRoles={['recruiter']}>
+              <ProtectedRoute allowedRoles={['recruiter', 'interviewer']}>
                 <JobDetails />
               </ProtectedRoute>
             } />
