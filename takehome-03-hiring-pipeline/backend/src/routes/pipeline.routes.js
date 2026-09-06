@@ -44,6 +44,7 @@ router.post('/:id/advance', authenticate, requireRecruiter, async (req, res) => 
     }
 
     const now = new Date();
+    const oldStage = app.stage;
 
     app.stage = nextStage;
     app.stage_entered_at = now;
@@ -55,9 +56,9 @@ router.post('/:id/advance', authenticate, requireRecruiter, async (req, res) => 
       actor_name: user.name,
       event_type: 'stage_change',
       details: JSON.stringify({
-        from_stage: app.stage,
+        from_stage: oldStage,
         to_stage: nextStage,
-        message: `Stage advanced from "${app.stage}" to "${nextStage}"`,
+        message: `Stage advanced from "${oldStage}" to "${nextStage}"`,
       }),
       created_at: now,
     });
