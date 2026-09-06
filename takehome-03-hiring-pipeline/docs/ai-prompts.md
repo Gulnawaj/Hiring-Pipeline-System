@@ -70,4 +70,49 @@ The timeline must record:
 
 Please fix the pipeline stage-change logic so that the old stage is stored before updating the application stage. Then use the stored old stage and the new stage when creating the timeline event.
 
-Also verify that this does not break the existing pipeline rules or the immutable application timeline.
+Also verify that this does not break the existing pipeline rules or the immutable application timeline. 
+
+## Dashboard Runtime Error
+
+### Prompt
+Fix the dashboard page. After login, the dashboard initially loads partially and then becomes a blank white page. Check the frontend and backend dashboard response and make sure the frontend uses the correct response fields without changing the existing backend functionality.
+
+### What I Got
+The browser console showed:
+- `Cannot read properties of undefined (reading 'openPositions')`
+- `Maximum update depth exceeded`
+
+The dashboard frontend was expecting fields such as `headline.openPositions`, `headline.activeApplications`, `headline.interviewsThisWeek`, `applicationsByJob`, `applicationsByStage`, and `weeklyApplications`.
+
+However, the backend dashboard API returns the data under `metrics`, `by_job`, `by_stage`, and `weekly_trend`.
+
+### What I Corrected
+Updated the dashboard frontend to use the actual backend response structure:
+
+- `metrics.open_positions` → Open Positions
+- `metrics.active_applications` → Active Applications
+- `metrics.interviews_scheduled` → Interviews This Week
+- `metrics.hires_this_month` → Hires This Month
+- `by_stage` → Stage Chart
+- `weekly_trend` → Weekly Trends Chart
+- `by_job` → Job Breakdown Table
+
+After the correction, the dashboard loads correctly without the blank white screen or the `openPositions` undefined error.
+
+### Prompt
+Fix date display issues and the blank page when clicking "View" on an application. Ensure the frontend uses the backend's actual field names and handles dates safely.
+
+### What I got
+- Job/Application pages showed **Invalid Date**.
+- Clicking **View** opened a blank page.
+- Console showed `RangeError: Invalid time value` in `TimelineHistory.jsx`.
+
+### What I corrected
+- Changed `createdAt` → `created_at`.
+- Changed old application/timeline fields to the backend fields.
+- Updated timeline handling to use `event_type`, `actor_name`, and parsed `details`.
+- Added safe date validation to prevent page crashes.
+- Fixed feedback payload to use `comments`.
+
+### Result
+Dates display correctly and the **View Application** page loads without crashing.
