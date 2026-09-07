@@ -13,6 +13,8 @@ import {
   Briefcase,
   Plus,
   X,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 
 const ApplicationDetails = () => {
@@ -24,6 +26,8 @@ const ApplicationDetails = () => {
 
   const [interviewersList, setInterviewersList] = useState([]);
   const [selectedInterviewer, setSelectedInterviewer] = useState('');
+  const [interviewDate, setInterviewDate] = useState('');
+  const [interviewTime, setInterviewTime] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
 
   const fetchApplicationDetails = async () => {
@@ -45,7 +49,10 @@ const ApplicationDetails = () => {
 
     try {
       const response = await api.get('/auth/interviewers');
-      setInterviewersList(Array.isArray(response.data) ? response.data : []);
+
+      setInterviewersList(
+        Array.isArray(response.data) ? response.data : []
+      );
     } catch (err) {
       console.error('Failed to load interviewers list:', err);
       setInterviewersList([]);
@@ -60,14 +67,42 @@ const ApplicationDetails = () => {
   const handleAssignInterviewer = async () => {
     if (!selectedInterviewer || isAssigning) return;
 
+    // Require date and time together if either one is entered.
+    if (
+      (interviewDate && !interviewTime) ||
+      (!interviewDate && interviewTime)
+    ) {
+      alert('Please provide both interview date and interview time.');
+      return;
+    }
+
     setIsAssigning(true);
 
     try {
+      let scheduledAt = null;
+
+      if (interviewDate && interviewTime) {
+        const localDateTime = new Date(
+          `${interviewDate}T${interviewTime}`
+        );
+
+        if (Number.isNaN(localDateTime.getTime())) {
+          alert('Invalid interview date or time.');
+          setIsAssigning(false);
+          return;
+        }
+
+        scheduledAt = localDateTime.toISOString();
+      }
+
       await applicationsService.assignInterviewer(applicationId, {
         interviewer_id: selectedInterviewer,
+        scheduled_at: scheduledAt,
       });
 
       setSelectedInterviewer('');
+      setInterviewDate('');
+      setInterviewTime('');
 
       await fetchApplicationDetails();
     } catch (err) {
@@ -100,6 +135,18 @@ const ApplicationDetails = () => {
           'Failed to remove interviewer'
       );
     }
+  };
+
+  const formatScheduledDate = (value) => {
+    if (!value) return null;
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date.toLocaleString();
   };
 
   if (loading) {
@@ -163,7 +210,7 @@ const ApplicationDetails = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 pb-12">
 
       {/* Back link */}
       <div>
@@ -220,7 +267,7 @@ const ApplicationDetails = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-8 mt-8">
 
         {/* Left column */}
         <div className="lg:col-span-2 space-y-8">
@@ -304,7 +351,7 @@ const ApplicationDetails = () => {
                   (interviewer) => (
                     <li
                       key={interviewer.id}
-                      className="flex items-center space-x-3 text-sm bg-slate-50 p-2 rounded-md"
+                      className="flex items-center space-x-3 text-sm bg-slate-50 p-3 rounded-md"
                     >
                       <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
                         {interviewer.name
@@ -320,6 +367,17 @@ const ApplicationDetails = () => {
                         <p className="text-xs text-slate-500">
                           {interviewer.email}
                         </p>
+
+                        {interviewer.scheduled_at && (
+                          <div className="mt-1 flex items-center gap-1 text-xs text-indigo-600">
+                            <Calendar className="w-3 h-3" />
+                            <span>
+                              {formatScheduledDate(
+                                interviewer.scheduled_at
+                              )}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {isRecruiter && (
@@ -349,17 +407,20 @@ const ApplicationDetails = () => {
             {/* Assign interviewer */}
             {isRecruiter && (
               <div className="mt-4 pt-4 border-t border-slate-100">
+
                 <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 block">
                   Assign Interviewer
                 </label>
 
-                <div className="flex gap-2">
+                <div className="space-y-3">
+
+                  {/* Interviewer */}
                   <select
                     value={selectedInterviewer}
                     onChange={(e) =>
                       setSelectedInterviewer(e.target.value)
                     }
-                    className="flex-1 text-sm border-slate-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full text-sm border border-slate-300 rounded-md px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
                     disabled={isAssigning}
                   >
                     <option value="">
@@ -376,17 +437,60 @@ const ApplicationDetails = () => {
                     ))}
                   </select>
 
+                  {/* Interview Date */}
+                  <div>
+                    <label className="flex items-center gap-1 text-xs font-medium text-slate-500 mb-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Interview Date
+                    </label>
+
+                    <input
+                      type="date"
+                      value={interviewDate}
+                      onChange={(e) =>
+                        setInterviewDate(e.target.value)
+                      }
+                      disabled={isAssigning}
+                      className="w-full text-sm border border-slate-300 rounded-md px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Interview Time */}
+                  <div>
+                    <label className="flex items-center gap-1 text-xs font-medium text-slate-500 mb-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      Interview Time
+                    </label>
+
+                    <input
+                      type="time"
+                      value={interviewTime}
+                      onChange={(e) =>
+                        setInterviewTime(e.target.value)
+                      }
+                      disabled={isAssigning}
+                      className="w-full text-sm border border-slate-300 rounded-md px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Assign button */}
                   <button
                     type="button"
                     onClick={handleAssignInterviewer}
                     disabled={
-                      !selectedInterviewer || isAssigning
+                      !selectedInterviewer ||
+                      isAssigning
                     }
-                    className="btn btn-primary px-3 py-2 disabled:opacity-50"
+                    className="btn btn-primary w-full px-3 py-2 min-h-10 disabled:opacity-50 flex items-center justify-center gap-2"
                     title="Assign interviewer"
                   >
                     <Plus className="w-4 h-4" />
+
+                    {isAssigning
+                      ? 'Assigning...'
+                      : 'Assign Interviewer'}
                   </button>
+
                 </div>
               </div>
             )}
