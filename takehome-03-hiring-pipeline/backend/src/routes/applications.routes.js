@@ -39,7 +39,8 @@ function formatApplication(app) {
     assigned_interviewers: app.interview_panel ? app.interview_panel.map(ip => ({
       id: ip.interviewer_id._id.toString(),
       name: ip.interviewer_id.name,
-      email: ip.interviewer_id.email
+      email: ip.interviewer_id.email,
+      scheduled_at: ip.scheduled_at ? ip.scheduled_at.toISOString() : null
     })) : [],
     timeline: app.timeline ? app.timeline.map(t => {
       const obj = t;
@@ -105,24 +106,90 @@ router.get('/', authenticate, async (req, res) => {
     }
 
     const sortDirection = order.toLowerCase() === 'asc' ? 1 : -1;
+
     const validSortFields = {
       created_at: 'created_at',
-      stage: 'stage',
       updated_at: 'updated_at',
       candidate_name: 'candidate_name',
     };
+
     const orderByField = validSortFields[sort_by] || 'created_at';
-    const sort = { [orderByField]: sortDirection };
 
     const total = await Application.countDocuments(where);
 
-    const applications = await Application.find(where)
-      .populate('job_opening_id', 'title department status')
-      .sort(sort)
-      .skip(skip)
-      .limit(limitNum)
-      .lean();
+    let applications;
 
+    if (sort_by === 'stage') {
+      /*
+       * Stage sorting uses aggregation to apply a custom sort order:
+       *   Applied=1, Screening=2, Interview=3, Offer=4, Hired=5, Rejected=6
+       *
+       * Aggregation does NOT auto-cast string IDs to ObjectId the way
+       * Mongoose .find() does, so we must cast them manually.
+       */
+      const aggWhere = { ...where };
+
+      // Cast job_opening_id string → ObjectId for aggregation
+      if (aggWhere.job_opening_id && typeof aggWhere.job_opening_id === 'string') {
+        if (mongoose.Types.ObjectId.isValid(aggWhere.job_opening_id)) {
+          aggWhere.job_opening_id = new mongoose.Types.ObjectId(aggWhere.job_opening_id);
+        }
+      }
+
+      // Cast _id.$in entries (interviewer restriction) → ObjectId
+      if (aggWhere._id && aggWhere._id.$in) {
+        aggWhere._id.$in = aggWhere._id.$in.map(id =>
+          typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id
+        );
+      }
+
+      applications = await Application.aggregate([
+        { $match: aggWhere },
+
+        {
+          $addFields: {
+            stage_sort_order: {
+              $cond: [
+                { $eq: ['$is_rejected', 1] },
+                6,
+                {
+                  $switch: {
+                    branches: [
+                      { case: { $eq: ['$stage', 'applied'] }, then: 1 },
+                      { case: { $eq: ['$stage', 'screening'] }, then: 2 },
+                      { case: { $eq: ['$stage', 'interview'] }, then: 3 },
+                      { case: { $eq: ['$stage', 'offer'] }, then: 4 },
+                      { case: { $eq: ['$stage', 'hired'] }, then: 5 },
+                    ],
+                    default: 0,
+                  },
+                },
+              ],
+            },
+          },
+        },
+
+        { $sort: { stage_sort_order: sortDirection, _id: 1 } },
+        { $skip: skip },
+        { $limit: limitNum },
+        { $project: { stage_sort_order: 0 } },
+      ]);
+
+      // Populate job_opening_id using Mongoose (same shape as .populate())
+      await Application.populate(applications, {
+        path: 'job_opening_id',
+        select: 'title department status',
+      });
+    } else {
+      applications = await Application.find(where)
+        .populate('job_opening_id', 'title department status')
+        .sort({ [orderByField]: sortDirection, _id: 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean();
+    }
+
+    // Fetch interview panels for the returned page of applications
     const appIds = applications.map(a => a._id);
     const panels = await InterviewPanel.find({ application_id: { $in: appIds } })
       .populate('interviewer_id', 'id name email')
@@ -176,6 +243,19 @@ router.get('/assigned', authenticate, async (req, res) => {
   } catch (err) {
     console.error('Error fetching assigned applications:', err);
     res.status(500).json({ error: 'Failed to fetch assigned applications' });
+  }
+});
+
+// GET /api/applications/sources — returns distinct source values for filter dropdowns
+router.get('/sources', authenticate, async (req, res) => {
+  try {
+    const sources = await Application.distinct('source');
+    // Sort alphabetically and filter out empty values
+    const filtered = sources.filter(s => s && s.trim()).sort();
+    res.json(filtered);
+  } catch (err) {
+    console.error('Error fetching distinct sources:', err);
+    res.status(500).json({ error: 'Failed to fetch source options' });
   }
 });
 
@@ -309,7 +389,7 @@ router.put('/:id', authenticate, requireRecruiter, async (req, res) => {
 router.post('/:id/interviewers', authenticate, requireRecruiter, async (req, res) => {
   try {
     const { id } = req.params;
-    const { interviewer_id } = req.body;
+    const { interviewer_id, scheduled_at } = req.body;
 
     const app = await Application.findById(id);
     if (!app) {
@@ -340,23 +420,33 @@ router.post('/:id/interviewers', authenticate, requireRecruiter, async (req, res
       return;
     }
 
+    let scheduledDate = null;
+    if (scheduled_at) {
+      scheduledDate = new Date(scheduled_at);
+      if (Number.isNaN(scheduledDate.getTime())) {
+        res.status(400).json({ error: 'Invalid scheduled_at date.' });
+        return;
+      }
+    }
+
     // use mongoose transaction if replica set, otherwise normal
     await InterviewPanel.create({
       application_id: id,
       interviewer_id,
+      scheduled_at: scheduledDate,
     });
 
     await ApplicationTimeline.create({
       application_id: id,
       actor_id: req.user.id,
       actor_name: req.user.name,
-      event_type: 'feedback',
+      event_type: 'interviewer_assigned',
       details: JSON.stringify({
         message: `Assigned interviewer: ${interviewer.name} (${interviewer.email})`,
       }),
     });
 
-    res.json({ message: 'Interviewer assigned successfully', interviewer_id, application_id: id });
+    res.json({ message: 'Interviewer assigned successfully', interviewer_id, application_id: id, scheduled_at: scheduledDate ? scheduledDate.toISOString() : null });
   } catch (err) {
     console.error('Error assigning interviewer:', err);
     res.status(500).json({ error: 'Failed to assign interviewer' });

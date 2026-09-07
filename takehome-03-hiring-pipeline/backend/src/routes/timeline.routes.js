@@ -63,13 +63,17 @@ router.post('/:id/feedback', authenticate, async (req, res) => {
       }
     }
 
-    if (!comments || typeof comments !== 'string' || comments.trim() === '') {
-      res.status(400).json({ error: 'Feedback comments are required.' });
+    const hasComments = comments && typeof comments === 'string' && comments.trim() !== '';
+    const numericRating = typeof rating === 'number' ? rating : parseInt(rating, 10);
+    const hasRating = rating !== undefined && !isNaN(numericRating) && numericRating >= 1 && numericRating <= 5;
+    const hasRecommendation = recommendation && typeof recommendation === 'string' && recommendation.trim() !== '';
+
+    if (!hasComments && !hasRating && !hasRecommendation) {
+      res.status(400).json({ error: 'Feedback cannot be empty. Please provide comments, a rating, or a recommendation.' });
       return;
     }
 
-    const numericRating = typeof rating === 'number' ? rating : parseInt(rating, 10);
-    if (rating !== undefined && (isNaN(numericRating) || numericRating < 1 || numericRating > 5)) {
+    if (rating !== undefined && rating !== null && (isNaN(numericRating) || numericRating < 1 || numericRating > 5)) {
       res.status(400).json({ error: 'Rating must be an integer between 1 and 5.' });
       return;
     }
@@ -77,7 +81,7 @@ router.post('/:id/feedback', authenticate, async (req, res) => {
     const details = JSON.stringify({
       rating: numericRating || null,
       recommendation: recommendation || null,
-      comments: comments.trim(),
+      comments: comments ? comments.trim() : '',
       submitted_by_role: user.role,
     });
 
