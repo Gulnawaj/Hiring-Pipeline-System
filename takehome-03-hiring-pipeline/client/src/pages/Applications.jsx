@@ -60,7 +60,7 @@ const Applications = () => {
     const loadFilterOptions = async () => {
       try {
         const [jobsRes, sourcesRes] = await Promise.all([
-          jobsService.getJobs({ include_archived: false }),
+          jobsService.getJobs({ status: 'active' }),
           applicationsService.getDistinctSources(),
         ]);
 

@@ -275,7 +275,7 @@ const TimelineHistory = ({ applicationId, currentStage, status }) => {
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-1 gap-4">
                   <div className="font-semibold text-slate-900 text-sm">
-                    {event.actor_name || 'System'}
+                    {event.actor?.name || event.actor_id?.name || event.actor_name || 'System'}
                   </div>
 
                   <time className="text-xs text-slate-500 font-medium whitespace-nowrap">

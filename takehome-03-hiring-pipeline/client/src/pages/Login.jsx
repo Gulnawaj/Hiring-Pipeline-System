@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,9 +31,9 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-slate-100">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
-            Hiring Pipeline
-          </h2>
+          <div className="mt-6 flex justify-center">
+            <Mail className="w-12 h-12 text-indigo-600" />
+          </div>
           <p className="mt-2 text-center text-sm text-slate-600">
             Sign in to your account
           </p>
@@ -82,11 +83,7 @@ const Login = () => {
             </button>
           </div>
           
-          <div className="mt-4 text-sm text-center text-slate-500">
-            <p>Test Accounts:</p>
-            <p>Recruiter: hr@company.com / password123</p>
-            <p>Interviewer: tech@company.com / password123</p>
-          </div>
+
         </form>
       </div>
     </div>

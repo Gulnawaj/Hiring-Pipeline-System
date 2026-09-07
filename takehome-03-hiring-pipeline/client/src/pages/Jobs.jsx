@@ -29,7 +29,7 @@ const fetchJobs = async () => {
 
   try {
     const response = await jobsService.getJobs({
-      include_archived: showArchived,
+      status: showArchived ? 'archived' : 'active',
     });
 
     const data = Array.isArray(response.data) ? response.data : [];
