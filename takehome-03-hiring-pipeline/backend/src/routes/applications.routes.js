@@ -43,11 +43,17 @@ function formatApplication(app) {
       scheduled_at: ip.scheduled_at ? ip.scheduled_at.toISOString() : null
     })) : [],
     timeline: app.timeline ? app.timeline.map(t => {
-      const obj = t;
-      obj.id = obj._id.toString();
-      delete obj._id;
-      delete obj.__v;
-      return obj;
+      const { _id, __v, actor_id, ...rest } = t;
+      const formattedEvent = { ...rest, id: _id.toString() };
+      
+      if (actor_id && typeof actor_id === 'object') {
+        formattedEvent.actor = {
+          id: actor_id._id.toString(),
+          name: actor_id.name,
+          email: actor_id.email
+        };
+      }
+      return formattedEvent;
     }) : undefined,
     days_in_stage: days,
     is_stalled: isStalled,
@@ -288,7 +294,10 @@ router.get('/:id', authenticate, async (req, res) => {
       }
     }
 
-    app.timeline = await ApplicationTimeline.find({ application_id: id }).sort({ created_at: 1 }).lean();
+    app.timeline = await ApplicationTimeline.find({ application_id: id })
+      .populate('actor_id', 'name email')
+      .sort({ created_at: 1 })
+      .lean();
 
     res.json(formatApplication(app));
   } catch (err) {

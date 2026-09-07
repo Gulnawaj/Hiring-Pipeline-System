@@ -27,11 +27,23 @@ router.get('/:id/timeline', authenticate, async (req, res) => {
       }
     }
 
-    const events = await ApplicationTimeline.find({ application_id: id }).sort({ created_at: 1 }).lean();
+    const events = await ApplicationTimeline.find({ application_id: id })
+      .populate('actor_id', 'name email')
+      .sort({ created_at: 1 })
+      .lean();
 
     const formattedEvents = events.map((e) => {
-      const { _id, __v, ...rest } = e;
-      return { ...rest, id: _id.toString() };
+      const { _id, __v, actor_id, ...rest } = e;
+      const formattedEvent = { ...rest, id: _id.toString() };
+      
+      if (actor_id && typeof actor_id === 'object') {
+        formattedEvent.actor = {
+          id: actor_id._id.toString(),
+          name: actor_id.name,
+          email: actor_id.email
+        };
+      }
+      return formattedEvent;
     });
 
     res.json(formattedEvents);

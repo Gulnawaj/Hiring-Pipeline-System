@@ -23,12 +23,12 @@ async function runTests() {
   
   // Test 1: Accounts and Roles (Goal 1)
   console.log('Test 1: Accounts and Roles');
-  const recruiter = await User.findOne({ email: 'recruiter@example.com' });
+  const recruiter = await User.findOne({ email: 'sarah@gmail.com' });
   assert.ok(recruiter, 'Recruiter user must exist');
   assert.strictEqual(recruiter.role, 'recruiter');
   assert.ok(bcrypt.compareSync('Password123!', recruiter.password_hash), 'Recruiter password must match');
 
-  const interviewer = await User.findOne({ email: 'interviewer1@example.com' });
+  const interviewer = await User.findOne({ email: 'vikas@gmail.com' });
   assert.ok(interviewer, 'Interviewer user must exist');
   assert.strictEqual(interviewer.role, 'interviewer');
   assert.ok(bcrypt.compareSync('Password123!', interviewer.password_hash), 'Interviewer password must match');
@@ -164,7 +164,7 @@ async function runTests() {
   const timelineEvent = await ApplicationTimeline.create({
     application_id: testApp._id,
     actor_id: recruiter._id,
-    actor_name: 'Rachel Adams',
+    actor_name: 'Sarah',
     event_type: 'created',
     details: JSON.stringify({ message: 'Test audit creation' }),
   });

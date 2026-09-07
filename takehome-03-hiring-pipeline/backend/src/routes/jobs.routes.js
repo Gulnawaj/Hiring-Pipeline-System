@@ -10,11 +10,16 @@ const router = Router();
 // GET /api/jobs
 router.get('/', authenticate, async (req, res) => {
   try {
-    const includeArchived = req.query.include_archived === 'true';
+    const { status } = req.query;
     const user = req.user;
 
     if (user.role === 'recruiter') {
-      const whereClause = includeArchived ? {} : { status: { $ne: 'archived' } };
+      let whereClause = { status: { $in: ['open', 'closed'] } };
+      if (status === 'archived') {
+        whereClause = { status: 'archived' };
+      } else if (status === 'active') {
+        whereClause = { status: { $in: ['open', 'closed'] } };
+      }
 
       const jobs = await JobOpening.find(whereClause).sort({ created_at: -1 }).lean();
       

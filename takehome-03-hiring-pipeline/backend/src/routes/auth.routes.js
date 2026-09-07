@@ -7,6 +7,10 @@ import { authenticate } from '../middleware/auth.middleware.js';
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-hiring-pipeline-key-change-in-production';
 
+
+
+
+
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
