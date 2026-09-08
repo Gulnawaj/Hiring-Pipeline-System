@@ -35,7 +35,7 @@ The system is structured as a decoupled, modern client-server architecture:
    - Computes expected next stage (`interview`).
 6. **Persistence & Audit Write**:
    - Updates `applications` table: sets `stage = 'interview'`, resets `stage_entered_at = now()` (resetting the 10-day stalled clock for the new stage), and updates `updated_at = now()`.
-   - Inserts immutable event into `application_timeline`: `{ event_type: 'stage_change', from_stage: 'screening', to_stage: 'interview', actor_id: recruiterId, actor_name: 'Rachel Adams' }`.
+   - Inserts immutable event into `application_timeline`: `{ event_type: 'stage_change', from_stage: 'screening', to_stage: 'interview', actor_id: recruiterId, actor_name: 'Sarah' }`.
 7. **Response**: Backend responds with HTTP `200 OK` and updated application record.
 8. **UI State Update**: Frontend updates the candidate's stage badge, refreshes the timeline feed, and updates the stalled alert counter in the header.
 
