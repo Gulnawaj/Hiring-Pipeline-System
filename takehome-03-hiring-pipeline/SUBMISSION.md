@@ -7,25 +7,36 @@
 
 ## Notes for the reviewer
 
-The backend uses Node.js with built-in SQLite (`node:sqlite`). Database immutability triggers enforce that audit timeline entries cannot be updated or deleted even via direct SQL operations. The application comes pre-seeded with realistic candidate data, interviews, historical timeline items, and stalled candidate records ready for review.
+This project implements a hiring pipeline system with separate recruiter and interviewer workflows.
+
+Recruiters can manage job openings, applications, pipeline stages, interviewer assignments, bulk actions, dashboard metrics, stalled-application alerts, and CSV pipeline exports.
+
+Interviewers only see applications assigned to them and can submit interview feedback. Permissions are enforced on the server rather than only through the frontend.
+
+The application includes seeded demo data covering different pipeline stages, rejected and hired candidates, interviewer assignments, interview feedback, timeline history, and stalled applications so the main requirements can be reviewed without creating everything manually.
+
+The database is MongoDB Atlas and the backend uses Mongoose. Application timeline records are treated as immutable audit history, with update/delete operations blocked so existing history cannot be rewritten.
 
 ## Demo credentials
 
-| Role | Email | Password |
-|------|-------|----------|
-| Recruiter | `recruiter@example.com` | `Password123!` |
-| Interviewer 1 | `interviewer1@example.com` | `Password123!` |
-| Interviewer 2 | `interviewer2@example.com` | `Password123!` |
-| Interviewer 3 | `interviewer3@example.com` | `Password123!` |
+| Role | Name | Email | Password |
+|---|---|---|---|
+| Recruiter | Sarah | sarah@gmail.com | Password123! |
+| Interviewer | Vikas Kumar | vikas@gmail.com | Password123! |
+| Interviewer | Rohan Singh | rohan@gmail.com | Password123! |
+| Interviewer | Gulnawaj | gulnawaj@gmail.com | Password123! |
 
 ## Stack
 
-| Layer | What you used | Why |
-|-------|---------------|-----|
-| Frontend | React + Vite + TypeScript + Vanilla CSS | Fast client-side reactivity, role-tailored workspaces, zero build overhead. |
-| Backend | Node.js + Express + TypeScript | Lightweight, robust typing, modular route architecture, and fast cold starts. |
-| Database | SQLite (`node:sqlite`) | Built-in zero-dependency ACID storage with foreign key constraints and audit immutability triggers. |
-| Hosting | Vercel (Client) & Render (Backend) | Reliable free tier with separate static CDN distribution and containerized API hosting. |
+|    Layer   |           What you used                 |                     Why                 |
+|    ---     |               ---                       |                     ---                 |
+| Frontend   |     React + Vite + JavaScript/JSX       | Component-based UI for recruiter and interviewer workflows. |
+
+| Backend    |        Node.js + Express                | REST API with server-side authentication, authorization, validation, and business rules. |
+
+| Database   |    MongoDB Atlas + Mongoose             | Document database with schema modeling, relationships through ObjectIds, and persistent application data. |
+
+| Hosting    |    Vercel (Client & Backend)            | Frontend and backend are deployed as separate on Vercel |
 
 ## Goal checklist
 
@@ -33,27 +44,38 @@ Mark each honestly. Partial is fine — say what is partial.
 
 | # | Goal | Status | Notes |
 |---|------|--------|-------|
-| 1 | Accounts and roles | Done | Recruiter and Interviewer roles strictly enforced on the server. |
-| 2 | Job openings | Done | Full CRUD, soft archiving/restoration, and application protection. |
-| 3 | Applications inside job openings | Done | Applications bound to openings with candidate details and notes. |
-| 4 | A pipeline with rules | Done | Sequential progression (`Applied → Screening → Interview → Offer → Hired`), rejection, and exact previous-stage reinstatement. |
-| 5 | Interview panel | Done | Multi-interviewer assignment, role validation, and scoped interviewer list view. |
-| 6 | Finding candidates | Done | Server-side text search, multi-field filtering, multi-column sorting, and pagination with total counts. |
-| 7 | Acting on many candidates at once | Done | Bulk-advance and bulk-reject with per-candidate result reporting; CSV snapshot export. |
-| 8 | A dashboard | Done | Headline KPI cards, breakdown by job opening and stage, 12-week quarterly trend charts. |
-| 9 | History you cannot rewrite | Done | Append-only timeline with creation, stage changes, rejections, reinstatements, and feedback; locked by DB triggers. |
-| 10 | Stalled-application alerts | Done | >10 day inactivity detection, nav badge counter, and stage-aware dismissal return logic. |
+| 1 | Accounts and roles | Done | Recruiter and Interviewer accounts with server-enforced role permissions. |
+
+| 2 | Job openings | Done | Create and edit job openings, open/closed status, archive/restore, and preservation of existing applications. |
+
+| 3 | Applications inside job openings | Done | Each application belongs to one job opening and stores candidate name, email, source, and notes. |
+
+| 4 | A pipeline with rules | Done | Sequential progression from `Applied → Screening → Interview → Offer → Hired`, rejection from any stage, and reinstatement to the exact stage before rejection. Forward skipping is rejected by the server. |
+
+| 5 | Interview panel | Done | Multiple interviewers can be assigned to an application. Interviewer access is limited to their assigned applications. Interview scheduling is also supported. |
+
+| 6 | Finding candidates | Done | Server-side candidate name/email search, job/stage/source filters, sorting, pagination, and total-match counts. |
+
+| 7 | Acting on many candidates at once | Done | Bulk advance and bulk reject return individual success/refusal results. Pipeline snapshot CSV export is included. |
+
+| 8 | A dashboard | Done | Open positions, active applications, interviews scheduled this week, hires this month, job/stage breakdowns, and a weekly applications trend for the last 12 weeks. |
+
+| 9 | History you cannot rewrite | Done | Application timeline records creation, stage changes, rejection, reinstatement, and interviewer feedback. Timeline records are protected from update/delete operations. |
+
+| 10 | Stalled-application alerts | Done | Applications stalled for more than 10 days appear in alerts, with a navigation badge and stage-specific dismissal behavior. Alerts can return when an application later enters and stalls in another stage. |
 
 ## How much time did you actually spend?
 
-Around 7–8 hours total, split into requirements modeling, backend implementation, automated verification, frontend workspace, and documentation.
+Approximately 12-14 hours including requirements analysis, backend implementation, frontend implementation, testing, debugging, and documentation.
 
 ## What would you do next, with another 12 hours?
 
-1. Implement structured interview scorecard templates with rubric criteria per job role.
-2. Add automated email digest notifications for recruiters summarizing candidates approaching the 10-day stalled threshold.
-3. Add candidate-facing self-service interview slot booking.
+1. I would add Structured interview scorecards per stage which help the recruiter for evaluation.
+
+2. I would also add source-of-hire reporting to analyze where successful candidates are coming from.
+
+
 
 ## What are you least happy with in this codebase, and why?
 
-In SQLite, full-text search currently relies on SQL `LIKE '%pattern%'`. While blazingly fast for thousands of rows, adding SQLite FTS5 virtual tables or migrating to PostgreSQL `pg_trgm` would provide superior fuzzy matching and phonetic search at enterprise scale.
+I would improve the consistency of error handling across the application. The main workflows handle API failures, but with more time I would standardize error responses and frontend error states so failures are presented more consistently to users.
