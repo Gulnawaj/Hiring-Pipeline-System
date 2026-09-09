@@ -12,15 +12,15 @@ import { InterviewPanel } from '../models/InterviewPanel.js';
 import { ApplicationTimeline } from '../models/ApplicationTimeline.js';
 import { StalledAlertDismissal } from '../models/StalledAlertDismissal.js';
 
-console.log('🧪 Starting Hiring Pipeline Verification Test Suite (MongoDB + Mongoose)...\n');
+console.log('Starting Hiring Pipeline Verification Test Suite (MongoDB + Mongoose)...\n');
 
 async function runTests() {
   const mongod = await MongoMemoryServer.create();
   process.env.MONGODB_URI = mongod.getUri();
-  
+
   await connectDB();
   await runSeed();
-  
+
   // Test 1: Accounts and Roles (Goal 1)
   console.log('Test 1: Accounts and Roles');
   const recruiter = await User.findOne({ email: 'sarah@gmail.com' });

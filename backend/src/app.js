@@ -20,6 +20,11 @@ app.use(cors({
 
 app.use(express.json());
 
+// Root Endpoint
+app.get('/', (_req, res) => {
+  res.send('Hiring Pipeline API is running');
+});
+
 // Health Check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
@@ -37,7 +42,7 @@ app.use('/api/export', exportRoutes);
 
 // 404 Handler
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({ error: 'error not found' });
 });
 
 // Global Error Handler

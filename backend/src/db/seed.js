@@ -12,7 +12,7 @@ import { StalledAlertDismissal } from '../models/StalledAlertDismissal.js';
 dotenv.config();
 
 export async function runSeed() {
-  console.log('🌱 Starting safe/idempotent MongoDB database seed...');
+  console.log(' Starting safe/idempotent MongoDB database seed...');
 
   await connectDB();
 
