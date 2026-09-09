@@ -343,3 +343,35 @@ Added validation on both frontend and backend to reject numeric and alphanumeric
 
 ### Result
 Candidate names now accept valid name formats and reject values containing numbers.
+
+## Edit Application Button Missing
+
+### Prompt
+
+Review Goal 3 and verify whether applications can actually be edited through the frontend.
+
+The backend already has an `updateApplication` controller and the frontend service already provides `updateApplication(id, data)`, but the Application Details page does not currently provide an "Edit Application" action.
+
+Add the missing recruiter-facing edit functionality.
+
+Requirements:
+- Add an "Edit Application" button to the Application Details page.
+- Reuse the existing application form where possible.
+- Pre-fill the form with the existing application data.
+- Allow editing candidate name, candidate email, source, notes, and job opening.
+- Do not allow the application stage to be changed through the edit form because stage changes are handled by the pipeline functionality.
+- Use the existing `applicationsService.updateApplication()` API.
+- Preserve the existing validation and duplicate-application rules.
+- Keep the existing UI design and other application functionality unchanged.
+
+### What I got
+
+The backend supported application updates and the frontend had an update API method, but there was no visible edit action on the Application Details page for recruiters.
+
+### What I corrected
+
+Added an "Edit Application" action to the recruiter-facing Application Details page and connected it to the existing application update API. The existing application form was reused for edit mode and populated with the current application values.
+
+### Result
+
+Recruiters can now open an application, edit the allowed application details, save the changes, and see the updated information without affecting the pipeline stage or other application functionality.
