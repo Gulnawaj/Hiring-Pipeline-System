@@ -3,7 +3,7 @@
 ## Links
 
 - **GitHub repository:** https://github.com/Gulnawaj/Hiring-Pipeline-System
-- **Live application:** <deployed URL>
+- **Live application:**  https://hiring-pipeline-system-isim.vercel.app
 
 ## Notes for the reviewer
 
@@ -33,7 +33,7 @@ The database is MongoDB Atlas and the backend uses Mongoose. Application timelin
 | Frontend | React + Vite + JavaScript/JSX | Component-based UI for recruiter and interviewer workflows. |
 | Backend | Node.js + Express | REST API with server-side authentication, authorization, validation, and business rules. |
 | Database | MongoDB Atlas + Mongoose | Document database with schema modeling, relationships through ObjectIds, and persistent application data. |
-| Hosting | Vercel (Client) & (Backend) | Separate deployment for the frontend and backend API. |
+| Hosting | Vercel (Client) & (Backend) | Separate deployment for the frontend and backend. |
 
 ## Goal checklist
 
@@ -61,6 +61,8 @@ Approximately 12-14 hours including requirements analysis, backend implementatio
 1. I would add Structured interview scorecards per stage which help the recruiter for evaluation.
 
 2. I would also add source-of-hire reporting to analyze where successful candidates are coming from.
+
+3. I would optimize by code by adding new features that can make the project more clean and advanced.
 
 
 
