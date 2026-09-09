@@ -62,7 +62,7 @@ Approximately 12-14 hours including requirements analysis, backend implementatio
 
 2. I would also add source-of-hire reporting to analyze where successful candidates are coming from.
 
-3. I would optimize by code by adding new features that can make the project more clean and advanced.
+3. I would optimize my code by adding new features that can make the project more clean and advanced.
 
 
 
