@@ -56,4 +56,4 @@ The system follows a client-server architecture:
 
 - **Did NOT build advanced interview-management features**: The project supports assigning interviewers and scheduling interviews, but I did not build a full calendar system, recurring interviews, calendar integrations, or automated meeting links because these were outside the assignment scope.
 
-**Did NOT build WebSockets or real-time notifications**: The required alerts can be handled through normal API requests, so real-time communication would add complexity without being necessary for the assignment.
+- **Did NOT build WebSockets or real-time notifications**: The required alerts can be handled through normal API requests, so real-time communication would add complexity without being necessary for the assignment.
