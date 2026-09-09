@@ -2,47 +2,58 @@
 
 ### 1. What are the moving pieces, and how do they talk to each other?
 
-The system is structured as a decoupled, modern client-server architecture:
-- **Client (`client/`)**: Single-Page Application (SPA) providing role-tailored workspaces for recruiters and interviewers. It interacts with the backend strictly via authenticated RESTful JSON HTTP endpoints.
-- **Backend API (`backend/`)**: Node.js & Express service written in TypeScript. It handles JWT authentication, enforces role-based access control (RBAC), validates business logic rules (state transition graphs, bulk actions, stage-aware alert dismissals), and orchestrates database transactions.
-- **Data Persistence Layer (`hiring_pipeline.db`)**: Embedded relational SQLite engine with WAL mode and foreign key constraints enabled. It guarantees data integrity and uses database triggers to enforce audit log immutability.
-- **Communication Protocol**: Stateless HTTP/1.1 with Bearer JWT headers and JSON payloads, with streaming support for CSV file exports.
+The system follows a client-server architecture:
+
+1. **Client (`client/`)**: A React.js single-page application built with Tailwind CSS, JavaScript/JSX, and Vite. It provides different interfaces for recruiters and interviewers and communicates with the backend through REST APIs.
+
+2. **Backend (`backend/`)**: A Node.js and Express.js API written in JavaScript. It handles authentication, role-based access, application and pipeline rules, and other business logic.
+
+3. **Database**: MongoDB Atlas stores users, jobs, applications, interview assignments, and application timeline data. Mongoose is used to interact with MongoDB.
+
+4. **Communication**: The frontend and backend communicate through HTTP requests using JSON. JWT tokens are used to authenticate users, and the CSV export is returned as a downloadable file.
 
 ---
 
 ### 2. Where does each piece run?
 
 - **Development**:
-  - Backend runs on `http://localhost:4000` via Node.js runtime.
-  - Client runs locally on Vite dev server (e.g. `http://localhost:5173`).
-  - Database runs as a local file (`backend/hiring_pipeline.db`).
+  - Backend runs on `http://localhost:4000` using the Node.js runtime.
+  - Client runs locally on `http://localhost:3000`.
+  - Database connects to MongoDB Atlas using environment variables.
+
 - **Production Deployment**:
-  - Browser-side client deployed to **Vercel** as static assets with global CDN caching.
-  - Backend API deployed to **Render** or **Railway** as a containerized web service.
-  - Database hosted via managed SQLite (Turso / Litestream) or PostgreSQL (Supabase) via environment variables.
+  - Frontend is deployed as a separate Vercel project.
+  - Backend API is deployed as a separate Vercel project.
+  - Database is hosted on MongoDB Atlas.
 
 ---
 
 ### 3. What is the request path for one representative user action, end to end?
 
-**Representative Action: Recruiter advances a candidate from Screening to Interview**
-1. **User Interaction**: Recruiter clicks "Advance to Interview" on candidate Sophia Wang's detail page in the frontend client.
-2. **HTTP Request**: Frontend issues `POST /api/pipeline/:id/advance` with `Authorization: Bearer <jwt_token>`.
-3. **Authentication Middleware**: Express extracts and validates the JWT secret and decodes user identity (`req.user = { id, role: 'recruiter', ... }`).
-4. **Role Authorization Middleware**: `requireRecruiter` checks `req.user.role === 'recruiter'`. If non-recruiter, responds with `403 Forbidden`.
-5. **Domain Validation**:
-   - Backend queries current application state: verifies applicant exists, is not marked `is_rejected = 1`, and stage is `screening`.
-   - Computes expected next stage (`interview`).
-6. **Persistence & Audit Write**:
-   - Updates `applications` table: sets `stage = 'interview'`, resets `stage_entered_at = now()` (resetting the 10-day stalled clock for the new stage), and updates `updated_at = now()`.
-   - Inserts immutable event into `application_timeline`: `{ event_type: 'stage_change', from_stage: 'screening', to_stage: 'interview', actor_id: recruiterId, actor_name: 'Sarah' }`.
-7. **Response**: Backend responds with HTTP `200 OK` and updated application record.
-8. **UI State Update**: Frontend updates the candidate's stage badge, refreshes the timeline feed, and updates the stalled alert counter in the header.
+**Representative Action: Recruiter moves an application from Screening to Interview**
+
+1. **User Action**: The recruiter clicks the button to advance a candidate to the next stage.
+
+2. **Frontend Request**: The React frontend sends a `POST` request to the backend pipeline API with the application's ID and the user's JWT token.
+
+3. **Authentication**: The backend verifies the JWT token and identifies the logged-in user.
+
+4. **Authorization**: The backend checks that the user has the recruiter role required to change an application's stage.
+
+5. **Business Logic**: The controller checks the application's current stage and verifies that moving from `Screening` to `Interview` is a valid next step.
+
+6. **Database Update**: Mongoose updates the application in MongoDB Atlas, changes the stage to `Interview`, and updates the stage entry time.
+
+7. **Timeline Entry**: A timeline record is created to record the stage change and the user who performed it.
+
+8. **Response**: The backend sends the updated application data back to the frontend as a JSON response.
+
+9. **UI Update**: The React frontend updates the application stage and refreshes the relevant application and timeline information.
 
 ---
 
-### 4. What did you decide *not* to build, and why?
+### 4. What did you decide not to build, and why?
 
-- **Did NOT build complex microservices**: Kept backend as a clean, cohesive modular monolith. A hiring pipeline has strongly coupled relational transactions (e.g. updating candidate stage must atomically write an audit record); separating into microservices would introduce distributed transaction complexity (Sagas, eventual consistency) with zero business benefit.
-- **Did NOT build WebSockets for live alerts**: Goal 10 requires alert badges and counters. Polling on route transitions or lightweight revalidation provides simplicity, high reliability, and zero persistent socket connection overhead on free-tier hosting.
-- **Did NOT build arbitrary stage jumping in the UI**: Even though recruiters might conceptually want a "jump to offer" shortcut, we intentionally enforced the strict single-step pipeline required by Goal 4 to prevent accidental stage skipping and enforce process hygiene.
+- **Did NOT build advanced interview-management features**: The project supports assigning interviewers and scheduling interviews, but I did not build a full calendar system, recurring interviews, calendar integrations, or automated meeting links because these were outside the assignment scope.
+
+**Did NOT build WebSockets or real-time notifications**: The required alerts can be handled through normal API requests, so real-time communication would add complexity without being necessary for the assignment.
