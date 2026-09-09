@@ -39,7 +39,7 @@ const BulkActionResultModal = ({ results, onClose }) => {
                 <div className="ml-3 flex-1">
                   <div className="flex justify-between items-start">
                     <span className="font-semibold text-slate-900">
-                      {result.candidateName || `Candidate ID: ${result.applicationId}`}
+                      {result.candidate_name || `Application ID: ${result.id}`}
                     </span>
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                       result.success ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'

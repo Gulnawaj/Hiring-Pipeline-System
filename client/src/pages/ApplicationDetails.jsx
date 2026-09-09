@@ -5,6 +5,7 @@ import PipelineView from '../components/pipeline/PipelineView';
 import TimelineHistory from '../components/pipeline/TimelineHistory';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import ApplicationForm from '../components/applications/ApplicationForm';
 import {
   ArrowLeft,
   Mail,
@@ -29,6 +30,8 @@ const ApplicationDetails = () => {
   const [interviewDate, setInterviewDate] = useState('');
   const [interviewTime, setInterviewTime] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchApplicationDetails = async () => {
     try {
@@ -137,6 +140,26 @@ const ApplicationDetails = () => {
     }
   };
 
+  const handleEditSubmit = async (formData) => {
+    setIsUpdating(true);
+    try {
+      await applicationsService.updateApplication(applicationId, {
+        candidate_name: formData.candidateName,
+        candidate_email: formData.email,
+        source: formData.source,
+        notes: formData.notes,
+        job_opening_id: formData.jobId
+      });
+      setIsEditing(false);
+      await fetchApplicationDetails();
+    } catch (err) {
+      console.error('Failed to update application:', err);
+      alert(err.response?.data?.error || 'Failed to update application');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const formatScheduledDate = (value) => {
     if (!value) return null;
 
@@ -212,6 +235,22 @@ const ApplicationDetails = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
 
+      {isEditing && (
+        <ApplicationForm
+          initialData={{
+            candidateName: application.candidate_name,
+            email: application.candidate_email,
+            source: application.source,
+            notes: application.notes,
+            jobId: application.job_opening_id
+          }}
+          jobId={application.job_opening_id}
+          onSubmit={handleEditSubmit}
+          onClose={() => setIsEditing(false)}
+          isSubmitting={isUpdating}
+        />
+      )}
+
       {/* Back link */}
       <div>
         <Link
@@ -250,6 +289,14 @@ const ApplicationDetails = () => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {isRecruiter && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 mr-2"
+              >
+                Edit Application
+              </button>
+            )}
             <span
               className={`px-3 py-1 text-sm font-medium rounded-full border ${
                 status === 'rejected'

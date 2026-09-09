@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { jobsService } from '../../services/jobs.service';
 
 const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }) => {
   const [formData, setFormData] = useState({
     candidateName: initialData?.candidateName || '',
     email: initialData?.email || '',
     source: initialData?.source || 'Direct',
-    notes: initialData?.notes || ''
+    notes: initialData?.notes || '',
+    jobId: initialData?.jobId || jobId || ''
   });
   const [nameError, setNameError] = useState('');
+  const [jobs, setJobs] = useState([]);
+  const isEditing = !!initialData;
+
+  useEffect(() => {
+    if (isEditing) {
+      jobsService.getJobs({ status: 'active' })
+        .then(res => setJobs(res.data))
+        .catch(err => console.error('Failed to fetch jobs:', err));
+    }
+  }, [isEditing]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,7 +35,7 @@ const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }
       setNameError('Candidate name may contain letters, spaces, hyphens, and apostrophes, but not numbers or alphanumeric combinations.');
       return;
     }
-    onSubmit({ ...formData, jobId });
+    onSubmit(formData);
   };
 
   return (
@@ -93,6 +105,24 @@ const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }
               placeholder="Initial screening notes, etc."
             />
           </div>
+
+          {isEditing && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Job Opening <span className="text-red-500">*</span></label>
+              <select
+                name="jobId"
+                required
+                className="input-field p-2.5"
+                value={formData.jobId}
+                onChange={handleChange}
+              >
+                <option value="">Select a job opening</option>
+                {jobs.map(job => (
+                  <option key={job.id} value={job.id}>{job.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="pt-4 flex justify-end space-x-3">
             <button
