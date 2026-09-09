@@ -33,8 +33,7 @@ The database is MongoDB Atlas and the backend uses Mongoose. Application timelin
 | Frontend | React + Vite + JavaScript/JSX | Component-based UI for recruiter and interviewer workflows. |
 | Backend | Node.js + Express | REST API with server-side authentication, authorization, validation, and business rules. |
 | Database | MongoDB Atlas + Mongoose | Document database with schema modeling, relationships through ObjectIds, and persistent application data. |
-| Authentication | JWT + bcrypt | Password hashing and authenticated, role-based API access. |
-| Hosting | Vercel (Client) & Render (Backend) | Separate deployment for the frontend and backend API. |
+| Hosting | Vercel (Client) & (Backend) | Separate deployment for the frontend and backend API. |
 
 ## Goal checklist
 
