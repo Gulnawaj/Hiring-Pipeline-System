@@ -41,6 +41,7 @@ Log of the architectural and technical decisions that shaped this codebase.
 
 - **Why:** The frontend and backend have different responsibilities and build/runtime requirements. Separate Vercel projects keep the deployments independent while allowing the frontend to communicate with the backend through the configured API URL and environment variables.
 
+---
 
 ## Decision 5: Server-Side Application Filtering and Pagination
 
@@ -50,13 +51,17 @@ Log of the architectural and technical decisions that shaped this codebase.
 
 - **Why:** Goal 6 requires server-side search and pagination. Keeping these operations on the backend reduces unnecessary data transfer and ensures that the API returns only the records needed for the current page and filters.
 
-### Decision 9: Prevent Duplicate Active Applications
+---
+
+### Decision 6: Prevent Duplicate Active Applications
 
 - **Chose:** Allow only one active application for the same candidate and job opening at a time.
 
 - **Rejected:** Allowing unlimited active applications for the same candidate and job.
 
 - **Why:** Multiple historical rejected applications are still preserved, but allowing multiple active applications for the same candidate and opening could create ambiguity in the hiring pipeline. The rule prevents duplicate active records while still allowing the candidate to reapply after rejection.
+
+---
 
 ### Decision 7: Authentication Approach
 
@@ -66,6 +71,7 @@ Log of the architectural and technical decisions that shaped this codebase.
 
 - **Why:** Authentication and authorization must be enforced on the server. JWT allows the backend to identify the authenticated user on each request, while backend role checks prevent users from accessing operations they are not allowed to perform.
 
+---
 
 ### Decision 8: Interviewer Assignment Model
 
@@ -75,7 +81,7 @@ Log of the architectural and technical decisions that shaped this codebase.
 
 - **Why:** The requirements allow any number of interviewers to be assigned to an application. A separate assignment model also makes it possible for the same interviewer to be assigned to multiple applications.
 
-
+---
 
 ### Decision 9: Interview Scheduling Independent of Pipeline Stage
 
