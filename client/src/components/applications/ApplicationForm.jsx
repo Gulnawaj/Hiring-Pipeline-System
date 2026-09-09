@@ -8,14 +8,21 @@ const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }
     source: initialData?.source || 'Direct',
     notes: initialData?.notes || ''
   });
+  const [nameError, setNameError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'candidateName') setNameError('');
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const nameRegex = /^[A-Za-z]+(?:[\s'-][A-Za-z]+)*$/;
+    if (!nameRegex.test(formData.candidateName.trim())) {
+      setNameError('Candidate name may contain letters, spaces, hyphens, and apostrophes, but not numbers or alphanumeric combinations.');
+      return;
+    }
     onSubmit({ ...formData, jobId });
   };
 
@@ -24,7 +31,7 @@ const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-slate-100">
           <h2 className="text-xl font-bold text-slate-900">
-            {initialData ? 'Edit Application' : 'Add Candidate'}
+            {initialData ? 'Edit Application' : 'Add Application'}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
             <X className="w-5 h-5" />
@@ -38,11 +45,12 @@ const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }
               type="text"
               name="candidateName"
               required
-              className="input-field p-2.5"
+              className={`input-field p-2.5 ${nameError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
               value={formData.candidateName}
               onChange={handleChange}
               placeholder="e.g. Jane Doe"
             />
+            {nameError && <p className="text-red-500 text-xs mt-1">{nameError}</p>}
           </div>
           
           <div>
@@ -100,7 +108,7 @@ const ApplicationForm = ({ initialData, jobId, onSubmit, onClose, isSubmitting }
               disabled={isSubmitting || !formData.candidateName || !formData.email}
               className="btn btn-primary"
             >
-              {isSubmitting ? 'Saving...' : 'Save Candidate'}
+              {isSubmitting ? 'Saving...' : 'Save Application'}
             </button>
           </div>
         </form>

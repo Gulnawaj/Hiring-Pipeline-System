@@ -218,7 +218,7 @@ const handleBulkReject = async () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">All Applications</h1>
-          <p className="text-slate-500 mt-1">Manage and filter all candidates across jobs</p>
+          <p className="text-slate-500 mt-1">Manage and filter all applications across jobs</p>
         </div>
         <div className="flex space-x-3">
           <button onClick={handleExport} className="btn btn-secondary flex items-center">
