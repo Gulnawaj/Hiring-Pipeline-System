@@ -54,16 +54,13 @@ Mark each honestly. Partial is fine — say what is partial.
 
 ## How much time did you actually spend?
 
-Approximately 12-14 hours including requirements analysis, backend implementation, frontend implementation, testing, debugging, and documentation.
+Approximately 13-18 hours including requirements analysis, backend implementation, frontend implementation, testing, debugging, and documentation.
 
 ## What would you do next, with another 12 hours?
 
-1. I would add Structured interview scorecards per stage which help the recruiter for evaluation.
+1. I would also add source-of-hire reporting to analyze where successful candidates are coming from.
 
-2. I would also add source-of-hire reporting to analyze where successful candidates are coming from.
-
-3. I would optimize my code by adding new features that can make the project more clean and advanced.
-
+2. I would optimize my code by adding new features that can make the project more clean and advanced.
 
 
 ## What are you least happy with in this codebase, and why?
