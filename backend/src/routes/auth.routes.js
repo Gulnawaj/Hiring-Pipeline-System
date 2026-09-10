@@ -13,4 +13,7 @@ router.get('/me', authenticate, authController.getMe);
 // GET /api/auth/interviewers
 router.get('/interviewers', authenticate, authController.getInterviewers);
 
+// POST /api/auth/logout
+router.post('/logout', authenticate, authController.logout);
+
 export default router;

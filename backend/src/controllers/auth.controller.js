@@ -22,7 +22,7 @@ export const login = async (req, res) => {
       return;
     }
 
-    const isPasswordValid = bcrypt.compareSync(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
@@ -71,4 +71,13 @@ export const getInterviewers = async (req, res) => {
     console.error('Error fetching interviewers:', err);
     res.status(500).json({ error: 'Failed to fetch interviewers' });
   }
+};
+
+import { addToBlacklist } from '../middleware/auth.middleware.js';
+
+export const logout = (req, res) => {
+  if (req.token) {
+    addToBlacklist(req.token);
+  }
+  res.json({ success: true, message: 'Logged out successfully' });
 };

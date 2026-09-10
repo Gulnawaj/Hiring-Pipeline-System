@@ -223,14 +223,15 @@ export const getAssignedApplications = async (req, res) => {
     const assignedPanels = await InterviewPanel.find({ interviewer_id: user.id }).lean();
     const assignedAppIds = assignedPanels.map(p => p.application_id);
 
-    const applications = await Application.find({ _id: { $in: assignedAppIds } })
-      .populate('job_opening_id', 'title department')
-      .sort({ updated_at: -1 })
-      .lean();
-
-    const panels = await InterviewPanel.find({ application_id: { $in: assignedAppIds } })
-      .populate('interviewer_id', 'id name email')
-      .lean();
+    const [applications, panels] = await Promise.all([
+      Application.find({ _id: { $in: assignedAppIds } })
+        .populate('job_opening_id', 'title department')
+        .sort({ updated_at: -1 })
+        .lean(),
+      InterviewPanel.find({ application_id: { $in: assignedAppIds } })
+        .populate('interviewer_id', 'id name email')
+        .lean()
+    ]);
 
     applications.forEach(app => {
       app.interview_panel = panels.filter(p => p.application_id.toString() === app._id.toString());
